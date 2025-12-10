@@ -32,6 +32,12 @@ Environment:
 typedef struct _CONTROL_DEVICE_EXTENSION {
 
     HANDLE   FileHandle; // Store your control data here
+    WDFQUEUE DefaultQueue;
+    WDFWAITLOCK DataLock;
+    PVOID DataBuffer;
+    SIZE_T DataBufferSize;
+    SIZE_T DataLength;
+    WDF TIMER;
 
 } CONTROL_DEVICE_EXTENSION, *PCONTROL_DEVICE_EXTENSION;
 
@@ -70,6 +76,7 @@ NonPnpDeviceAdd(
 EVT_WDF_DRIVER_UNLOAD NonPnpEvtDriverUnload;
 
 EVT_WDF_DEVICE_CONTEXT_CLEANUP NonPnpEvtDriverContextCleanup;
+EVT_WDF_DEVICE_CONTEXT_CLEANUP NonPnpEvtDeviceContextCleanup;
 EVT_WDF_DEVICE_SHUTDOWN_NOTIFICATION NonPnpShutdown;
 
 EVT_WDF_IO_QUEUE_IO_DEVICE_CONTROL FileEvtIoDeviceControl;
@@ -79,6 +86,8 @@ EVT_WDF_IO_QUEUE_IO_WRITE FileEvtIoWrite;
 EVT_WDF_IO_IN_CALLER_CONTEXT NonPnpEvtDeviceIoInCallerContext;
 EVT_WDF_DEVICE_FILE_CREATE NonPnpEvtDeviceFileCreate;
 EVT_WDF_FILE_CLOSE NonPnpEvtFileClose;
+
+EVT_WDF_TIMER EvtTimerFunc;
 
 VOID
 PrintChars(
