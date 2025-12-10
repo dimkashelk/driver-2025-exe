@@ -303,9 +303,10 @@ Return Value:
     WDF_IO_QUEUE_CONFIG_INIT_DEFAULT_QUEUE(&ioQueueConfig,
                                     WdfIoQueueDispatchSequential);
 
-    ioQueueConfig.EvtIoRead = FileEvtIoRead;
-    ioQueueConfig.EvtIoWrite = FileEvtIoWrite;
+    // Only keep Device Control handler, remove Read/Write
     ioQueueConfig.EvtIoDeviceControl = FileEvtIoDeviceControl;
+    ioQueueConfig.EvtIoRead = NULL;
+    ioQueueConfig.EvtIoWrite = NULL;
 
     WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
     //
@@ -324,6 +325,43 @@ Return Value:
         TraceEvents(TRACE_LEVEL_ERROR, DBG_INIT, "WdfIoQueueCreate failed %!STATUS!", status);
         goto End;
     }
+
+    // Store the queue in the device extension
+    devExt = ControlGetData(controlDevice);
+    devExt->DefaultQueue = queue;
+
+    // Create a wait lock for protecting the data buffer
+    WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+    attributes.ParentObject = controlDevice;
+    status = WdfWaitLockCreate(&attributes, &devExt->DataLock);
+    if (!NT_SUCCESS(status)) {
+        TraceEvents(TRACE_LEVEL_ERROR, DBG_INIT, "WdfWaitLockCreate failed %!STATUS!", status);
+        goto End;
+    }
+
+    // Initialize the data buffer
+    devExt->DataBuffer = NULL;
+    devExt->DataBufferSize = 0;
+    devExt->DataLength = 0;
+
+    // Create timer for periodic data generation
+    WDF_TIMER_CONFIG timerConfig;
+    WDF_TIMER_CONFIG_INIT(&timerConfig, EvtTimerFunc);
+    timerConfig.Period = 1000; // 1 second period
+
+    WDF_OBJECT_ATTRIBUTES timerAttributes;
+    WDF_OBJECT_ATTRIBUTES_INIT(&timerAttributes);
+    WDF_OBJECT_ATTRIBUTES_SET_CONTEXT_TYPE(&timerAttributes, CONTROL_DEVICE_EXTENSION);
+    timerAttributes.ParentObject = controlDevice;
+
+    status = WdfTimerCreate(&timerConfig, &timerAttributes, &devExt->TIMER);
+    if (!NT_SUCCESS(status)) {
+        TraceEvents(TRACE_LEVEL_ERROR, DBG_INIT, "WdfTimerCreate failed %!STATUS!", status);
+        goto End;
+    }
+
+    // Start the timer
+    WdfTimerStart(devExt->TIMER, WDF_REL_TIMEOUT_IN_MS(1000));
 
     //
     // Control devices must notify WDF when they are done initializing.   I/O is
@@ -1025,6 +1063,61 @@ Return Value:
 
             break;
         }
+    case IOCTL_NONPNP_READ_DATA:
+        {
+            WDFDEVICE device;
+            PCONTROL_DEVICE_EXTENSION devExt;
+            PVOID outputBuffer = NULL;
+            size_t outputBufferLength = 0;
+
+            TraceEvents(TRACE_LEVEL_VERBOSE, DBG_IOCTL, "Called IOCTL_NONPNP_READ_DATA\\n");
+
+            // Get the device extension
+            device = WdfIoQueueGetDevice(Queue);
+            devExt = ControlGetData(device);
+
+            // Acquire the lock to protect the data buffer
+            WdfWaitLockAcquire(devExt->DataLock, NULL);
+
+            // Get the output buffer
+            status = WdfRequestRetrieveOutputBuffer(Request, 0, &outputBuffer, &outputBufferLength);
+            if (!NT_SUCCESS(status)) {
+                WdfWaitLockRelease(devExt->DataLock);
+                status = STATUS_INSUFFICIENT_RESOURCES;
+                break;
+            }
+
+            // Copy data from internal buffer to output buffer
+            if (devExt->DataBuffer != NULL && devExt->DataLength > 0) {
+                SIZE_T copySize = (devExt->DataLength <= outputBufferLength) ? 
+                                  devExt->DataLength : outputBufferLength;
+                
+                RtlCopyMemory(outputBuffer, devExt->DataBuffer, copySize);
+                
+                // Set the number of bytes returned
+                WdfRequestSetInformation(Request, copySize);
+
+                TraceEvents(TRACE_LEVEL_VERBOSE, DBG_IOCTL, 
+                           "Returned %d bytes from internal buffer", copySize);
+
+                // Clear the internal buffer after reading
+                if (devExt->DataBuffer != NULL) {
+                    ExFreePoolWithTag(devExt->DataBuffer, POOL_TAG);
+                    devExt->DataBuffer = NULL;
+                    devExt->DataLength = 0;
+                    devExt->DataBufferSize = 0;
+                }
+            } else {
+                // No data available, return 0 bytes
+                WdfRequestSetInformation(Request, 0);
+                TraceEvents(TRACE_LEVEL_VERBOSE, DBG_IOCTL, "No data available to return");
+            }
+
+            // Release the lock
+            WdfWaitLockRelease(devExt->DataLock);
+
+            break;
+        }
     default:
 
         //
@@ -1261,6 +1354,74 @@ Return Value:
     TraceEvents(TRACE_LEVEL_VERBOSE, DBG_INIT, "Entered NonPnpDriverUnload\n");
 
     return;
+}
+
+VOID
+EvtTimerFunc(
+    WDFTIMER Timer
+)
+/*++
+
+Routine Description:
+
+    Timer callback function that continuously increases the internal data buffer by one byte.
+
+Arguments:
+
+    Timer - Handle to the timer object
+
+Return Value:
+
+    None
+
+--*/
+{
+    WDFDEVICE device;
+    PCONTROL_DEVICE_EXTENSION devExt;
+    PVOID newBuffer;
+    SIZE_T newBufferSize;
+    UCHAR newByte;
+
+    device = WdfTimerGetParentObject(Timer);
+    devExt = ControlGetData(device);
+
+    // Acquire the lock to protect the data buffer
+    WdfWaitLockAcquire(devExt->DataLock, NULL);
+
+    // Calculate new buffer size
+    newBufferSize = devExt->DataLength + 1;
+    
+    // Allocate new buffer
+    newBuffer = ExAllocatePoolWithTag(NonPagedPool, newBufferSize, POOL_TAG);
+    if (newBuffer == NULL) {
+        TraceEvents(TRACE_LEVEL_ERROR, DBG_INIT, "Failed to allocate memory for data buffer");
+        WdfWaitLockRelease(devExt->DataLock);
+        return;
+    }
+
+    // Copy existing data if any
+    if (devExt->DataBuffer != NULL && devExt->DataLength > 0) {
+        RtlCopyMemory(newBuffer, devExt->DataBuffer, devExt->DataLength);
+    }
+
+    // Generate new byte (use current time or counter)
+    newByte = (UCHAR)(devExt->DataLength % 256); // Simple counter-based byte
+    ((PUCHAR)newBuffer)[devExt->DataLength] = newByte;
+
+    // Free old buffer
+    if (devExt->DataBuffer != NULL) {
+        ExFreePoolWithTag(devExt->DataBuffer, POOL_TAG);
+    }
+
+    // Update the data buffer
+    devExt->DataBuffer = newBuffer;
+    devExt->DataBufferSize = newBufferSize;
+    devExt->DataLength = newBufferSize;
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, DBG_INIT, "Timer generated data, buffer size: %d", newBufferSize);
+
+    // Release the lock
+    WdfWaitLockRelease(devExt->DataLock);
 }
 
 VOID
