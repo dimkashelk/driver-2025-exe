@@ -1060,8 +1060,8 @@ Return Value:
             //
             RtlCopyMemory(outBuf, data, outBufLength);
 
-            Hexdump(TRACE_LEVEL_VERBOSE,  DBG_IOCTL, "Data to User : %!HEXDUMP!\n",
-                            log_xstr(outBuf, (USHORT)datalen));
+            Hexdump((TRACE_LEVEL_VERBOSE,  DBG_IOCTL, "Data to User : %!HEXDUMP!\n",
+                            log_xstr(outBuf, (USHORT)datalen)));
             PrintChars(outBuf, datalen);
 
             //
