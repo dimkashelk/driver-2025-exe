@@ -790,11 +790,9 @@ Return Value:
     WDFDEVICE                   device;
     PCONTROL_DEVICE_EXTENSION   devExt;
 
-    UNREFERENCED_PARAMETER( Queue );
-
     PAGED_CODE();
 
-    device = WdfRequestGetDevice(Request);
+    device = WdfIoQueueGetDevice(Queue);
     devExt = ControlGetData(device);
 
     if(!OutputBufferLength || !InputBufferLength)
