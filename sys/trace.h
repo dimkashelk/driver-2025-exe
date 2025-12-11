@@ -64,6 +64,7 @@ __inline xstr_t log_xstr(void * p, short l) { xstr_t xs = {(char*)p,l}; return x
 //
 //
 #define WPP_LOGHEXDUMP(x) WPP_LOGPAIR(2, &((x)._len)) WPP_LOGPAIR((x)._len, (x)._buf)
+#define Hexdump WPP_LOGHEXDUMP
 
 
 
