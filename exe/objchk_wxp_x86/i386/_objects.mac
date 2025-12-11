@@ -11,8 +11,7 @@
 # lowercased
 BASEDIR=c:\winddk\7600.16385.0
 OBJECT_ROOT=c:\winddk\7600.16385.0
-MAKEDIR_LOWERCASE=c:\winddk\7600.16385.0\src\general\ioctl\kmdf\exe
-MAKEDIR_RELATIVE_TO_BASEDIR=src\general\ioctl\kmdf\exe
-OBJ_PATH=c:\winddk\7600.16385.0\src\general\ioctl\kmdf\exe
+MAKEDIR_LOWERCASE=z:\kmdf\exe
+OBJ_PATH=z:\kmdf\exe
 CONCURRENT_MIDL=0
 CONCURRENT_MANIFEST_BUILD=0

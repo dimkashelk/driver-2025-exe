@@ -16,6 +16,7 @@ Environment:
 
 --*/
 
+#include <wdm.h>
 #include <ntddk.h>
 #include <wdf.h>
 
@@ -23,7 +24,7 @@ Environment:
 #include <ntstrsafe.h>
 #include <wdmsec.h> // for SDDLs
 #include "public.h" // contains IOCTL definitions
-#include "trace.h" // contains macros for WPP tracing
+#include "Trace.h" // contains macros for WPP tracing
 
 #define NTDEVICE_NAME_STRING      L"\\Device\\NONPNP"
 #define SYMBOLIC_NAME_STRING     L"\\DosDevices\\NONPNP"
@@ -32,16 +33,15 @@ Environment:
 typedef struct _CONTROL_DEVICE_EXTENSION {
 
     HANDLE   FileHandle; // Store your control data here
-    WDFQUEUE DefaultQueue;
-    WDFWAITLOCK DataLock;
-    PVOID DataBuffer;
-    SIZE_T DataBufferSize;
-    SIZE_T DataLength;
-    WDFTIMER TIMER;
+
+    WDFTIMER Timer;
+    ULONG    DataLength;
+    UCHAR    DataBuffer[256];
 
 } CONTROL_DEVICE_EXTENSION, *PCONTROL_DEVICE_EXTENSION;
 
-WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(CONTROL_DEVICE_EXTENSION, ControlGetData)
+WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(CONTROL_DEVICE_EXTENSION,
+                                        ControlGetData)
 
 //
 // Following request context is used only for the method-neither ioctl case.
@@ -75,7 +75,6 @@ NonPnpDeviceAdd(
 EVT_WDF_DRIVER_UNLOAD NonPnpEvtDriverUnload;
 
 EVT_WDF_DEVICE_CONTEXT_CLEANUP NonPnpEvtDriverContextCleanup;
-EVT_WDF_DEVICE_CONTEXT_CLEANUP NonPnpEvtDeviceContextCleanup;
 EVT_WDF_DEVICE_SHUTDOWN_NOTIFICATION NonPnpShutdown;
 
 EVT_WDF_IO_QUEUE_IO_DEVICE_CONTROL FileEvtIoDeviceControl;
