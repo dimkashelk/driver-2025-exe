@@ -327,8 +327,9 @@ Return Value:
     WDF_IO_QUEUE_CONFIG_INIT_DEFAULT_QUEUE(&ioQueueConfig,
                                     WdfIoQueueDispatchSequential);
 
-    ioQueueConfig.EvtIoRead = FileEvtIoRead;
-    ioQueueConfig.EvtIoWrite = FileEvtIoWrite;
+    // Remove Read/Write handlers - only use DeviceIoControl
+    // ioQueueConfig.EvtIoRead = FileEvtIoRead;
+    // ioQueueConfig.EvtIoWrite = FileEvtIoWrite;
     ioQueueConfig.EvtIoDeviceControl = FileEvtIoDeviceControl;
 
     WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
@@ -1022,6 +1023,83 @@ Return Value:
             WdfRequestSetInformation(Request,
                     outBufLength < datalen? outBufLength:datalen);
 
+            break;
+        }
+    case IOCTL_NONPNP_GET_DATA_LENGTH:
+        {
+            PULONG outBuffer;
+
+            TraceEvents(TRACE_LEVEL_VERBOSE, DBG_IOCTL, "Called IOCTL_NONPNP_GET_DATA_LENGTH\\n");
+
+            status = WdfRequestRetrieveOutputBuffer(Request, sizeof(ULONG), &outBuffer, &bufSize);
+            if (!NT_SUCCESS(status)) {
+                status = STATUS_INSUFFICIENT_RESOURCES;
+                break;
+            }
+
+            if (bufSize >= sizeof(ULONG)) {
+                *outBuffer = devExt->DataLength;
+                WdfRequestSetInformation(Request, sizeof(ULONG));
+            } else {
+                status = STATUS_BUFFER_TOO_SMALL;
+            }
+
+            break;
+        }
+
+    case IOCTL_NONPNP_READ_DATA:
+        {
+            PCHAR outBuffer;
+
+            TraceEvents(TRACE_LEVEL_VERBOSE, DBG_IOCTL, "Called IOCTL_NONPNP_READ_DATA\\n");
+
+            status = WdfRequestRetrieveOutputBuffer(Request, 0, &outBuffer, &bufSize);
+            if (!NT_SUCCESS(status)) {
+                status = STATUS_INSUFFICIENT_RESOURCES;
+                break;
+            }
+
+            // Copy data from driver's buffer to output buffer
+            size_t bytesToCopy = (devExt->DataLength < bufSize) ? devExt->DataLength : bufSize;
+            
+            if (bytesToCopy > 0) {
+                RtlCopyMemory(outBuffer, devExt->DataBuffer, bytesToCopy);
+                // Shift remaining data in the buffer
+                if (devExt->DataLength > bytesToCopy) {
+                    RtlMoveMemory(devExt->DataBuffer, 
+                                 devExt->DataBuffer + bytesToCopy, 
+                                 devExt->DataLength - bytesToCopy);
+                }
+                devExt->DataLength -= bytesToCopy;
+            }
+
+            WdfRequestSetInformation(Request, bytesToCopy);
+            break;
+        }
+
+    case IOCTL_NONPNP_WRITE_DATA:
+        {
+            PCHAR inBuffer;
+
+            TraceEvents(TRACE_LEVEL_VERBOSE, DBG_IOCTL, "Called IOCTL_NONPNP_WRITE_DATA\\n");
+
+            status = WdfRequestRetrieveInputBuffer(Request, 0, &inBuffer, &bufSize);
+            if (!NT_SUCCESS(status)) {
+                status = STATUS_INSUFFICIENT_RESOURCES;
+                break;
+            }
+
+            // Copy data from input buffer to driver's buffer
+            if (bufSize > 0) {
+                // Ensure we don't exceed the buffer size
+                ULONG bytesToCopy = (bufSize > sizeof(devExt->DataBuffer)) ? 
+                                   sizeof(devExt->DataBuffer) : (ULONG)bufSize;
+                
+                RtlCopyMemory(devExt->DataBuffer, inBuffer, bytesToCopy);
+                devExt->DataLength = bytesToCopy;
+            }
+
+            WdfRequestSetInformation(Request, bufSize);
             break;
         }
     default:

@@ -1,4 +1,75 @@
-```
-# Windows system files
-*.tmh
-```
+# Compiled and build artifacts
+*.o
+*.obj
+*.out
+*.a
+*.so
+*.dll
+*.exe
+
+# Dependencies
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.mypy_cache/
+.pytest_cache/
+coverage/
+htmlcov/
+.coverage
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local
+*.env.*
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Build directories
+build/
+dist/
+target/
+.gradle/
+
+# Virtual environments
+venv/
+.venv/
+.env/
+
+# Compressed files
+*.zip
+*.gz
+*.tar
+*.tgz
+*.bz2
+*.xz
+*.7z
+*.rar
+*.zst
+*.lz4
+*.lzh
+*.cab
+*.arj
+*.rpm
+*.deb
+*.Z
+*.lz
+*.lzo
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.tar.zst
