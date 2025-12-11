@@ -199,11 +199,14 @@ Return Value:
 --*/
 {
     NTSTATUS                       status;
-    WDF_OBJECT_ATTRIBUTES           attributes;
-    WDF_IO_QUEUE_CONFIG      ioQueueConfig;
-    WDF_FILEOBJECT_CONFIG fileConfig;
-    WDFQUEUE                            queue;
-    WDFDEVICE   controlDevice;
+    WDF_OBJECT_ATTRIBUTES          attributes;
+    WDF_IO_QUEUE_CONFIG            ioQueueConfig;
+    WDF_FILEOBJECT_CONFIG          fileConfig;
+    WDFQUEUE                       queue;
+    WDFDEVICE                      controlDevice;
+    PCONTROL_DEVICE_EXTENSION      devExt;
+    WDF_TIMER_CONFIG               timerConfig;
+    WDF_OBJECT_ATTRIBUTES          timerAttributes;
     DECLARE_CONST_UNICODE_STRING(ntDeviceName, NTDEVICE_NAME_STRING) ;
     DECLARE_CONST_UNICODE_STRING(symbolicLinkName, SYMBOLIC_NAME_STRING) ;
 
@@ -327,7 +330,6 @@ Return Value:
     }
 
     // Store the queue in the device extension
-    PCONTROL_DEVICE_EXTENSION devExt;
     devExt = ControlGetData(controlDevice);
     devExt->DefaultQueue = queue;
 
@@ -346,11 +348,9 @@ Return Value:
     devExt->DataLength = 0;
 
     // Create timer for periodic data generation
-    WDF_TIMER_CONFIG timerConfig;
     WDF_TIMER_CONFIG_INIT(&timerConfig, EvtTimerFunc);
     timerConfig.Period = 1000; // 1 second period
 
-    WDF_OBJECT_ATTRIBUTES timerAttributes;
     WDF_OBJECT_ATTRIBUTES_INIT(&timerAttributes);
     WDF_OBJECT_ATTRIBUTES_SET_CONTEXT_TYPE(&timerAttributes, CONTROL_DEVICE_EXTENSION);
     timerAttributes.ParentObject = controlDevice;
@@ -825,7 +825,16 @@ Return Value:
     ULONG               datalen = (ULONG) strlen(data)+1;//Length of data including null
     PCHAR               buffer = NULL;
     PREQUEST_CONTEXT    reqContext = NULL;
-    size_t               bufSize;
+    size_t              bufSize;
+    WDFDEVICE           device;
+    PCONTROL_DEVICE_EXTENSION devExt;
+    PVOID               outputBuffer = NULL;
+    size_t              outputBufferLength = 0;
+    SIZE_T              copySize;
+    PVOID               inputBuffer = NULL;
+    size_t              inputBufferLength = 0;
+    UCHAR               newByte;
+    SIZE_T              newBufferSize;
 
     UNREFERENCED_PARAMETER( Queue );
 
@@ -1066,10 +1075,6 @@ Return Value:
         }
     case IOCTL_NONPNP_READ_DATA:
         {
-            WDFDEVICE device;
-            PCONTROL_DEVICE_EXTENSION devExt;
-            PVOID outputBuffer = NULL;
-            size_t outputBufferLength = 0;
 
             TraceEvents(TRACE_LEVEL_VERBOSE, DBG_IOCTL, "Called IOCTL_NONPNP_READ_DATA\\n");
 
