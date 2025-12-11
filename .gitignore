@@ -1,1 +1,4 @@
-Nothing should be ignored since only source code files (.c and .h) were modified and no build artifacts, dependencies, or temporary files were detected in the changes.
+```
+# Backup files
+*.backup
+```
