@@ -780,17 +780,22 @@ Return Value:
 
 --*/
 {
-    NTSTATUS            status = STATUS_SUCCESS;// Assume success
-    PCHAR               inBuf = NULL, outBuf = NULL; // pointer to Input and output buffer
-    PCHAR               data = "this String is from Device Driver !!!";
-    ULONG               datalen = (ULONG) strlen(data)+1;//Length of data including null
-    PCHAR               buffer = NULL;
-    PREQUEST_CONTEXT    reqContext = NULL;
-    size_t               bufSize;
+    NTSTATUS                    status = STATUS_SUCCESS;// Assume success
+    PCHAR                       inBuf = NULL, outBuf = NULL; // pointer to Input and output buffer
+    PCHAR                       data = "this String is from Device Driver !!!";
+    ULONG                       datalen = (ULONG) strlen(data)+1;//Length of data including null
+    PCHAR                       buffer = NULL;
+    PREQUEST_CONTEXT            reqContext = NULL;
+    size_t                      bufSize;
+    WDFDEVICE                   device;
+    PCONTROL_DEVICE_EXTENSION   devExt;
 
     UNREFERENCED_PARAMETER( Queue );
 
     PAGED_CODE();
+
+    device = WdfRequestGetDevice(Request);
+    devExt = ControlGetData(device);
 
     if(!OutputBufferLength || !InputBufferLength)
     {
@@ -1050,6 +1055,7 @@ Return Value:
     case IOCTL_NONPNP_READ_DATA:
         {
             PCHAR outBuffer;
+            size_t bytesToCopy;
 
             TraceEvents(TRACE_LEVEL_VERBOSE, DBG_IOCTL, "Called IOCTL_NONPNP_READ_DATA\\n");
 
@@ -1060,7 +1066,7 @@ Return Value:
             }
 
             // Copy data from driver's buffer to output buffer
-            size_t bytesToCopy = (devExt->DataLength < bufSize) ? devExt->DataLength : bufSize;
+            bytesToCopy = (devExt->DataLength < bufSize) ? devExt->DataLength : bufSize;
             
             if (bytesToCopy > 0) {
                 RtlCopyMemory(outBuffer, devExt->DataBuffer, bytesToCopy);
@@ -1080,6 +1086,7 @@ Return Value:
     case IOCTL_NONPNP_WRITE_DATA:
         {
             PCHAR inBuffer;
+            ULONG bytesToCopy;
 
             TraceEvents(TRACE_LEVEL_VERBOSE, DBG_IOCTL, "Called IOCTL_NONPNP_WRITE_DATA\\n");
 
@@ -1092,7 +1099,7 @@ Return Value:
             // Copy data from input buffer to driver's buffer
             if (bufSize > 0) {
                 // Ensure we don't exceed the buffer size
-                ULONG bytesToCopy = (bufSize > sizeof(devExt->DataBuffer)) ? 
+                bytesToCopy = (bufSize > sizeof(devExt->DataBuffer)) ? 
                                    sizeof(devExt->DataBuffer) : (ULONG)bufSize;
                 
                 RtlCopyMemory(devExt->DataBuffer, inBuffer, bytesToCopy);
