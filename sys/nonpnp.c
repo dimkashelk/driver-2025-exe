@@ -327,6 +327,7 @@ Return Value:
     }
 
     // Store the queue in the device extension
+    PCONTROL_DEVICE_EXTENSION devExt;
     devExt = ControlGetData(controlDevice);
     devExt->DefaultQueue = queue;
 

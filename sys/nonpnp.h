@@ -23,7 +23,7 @@ Environment:
 #include <ntstrsafe.h>
 #include <wdmsec.h> // for SDDLs
 #include "public.h" // contains IOCTL definitions
-#include "Trace.h" // contains macros for WPP tracing
+#include "trace.h" // contains macros for WPP tracing
 
 #define NTDEVICE_NAME_STRING      L"\\Device\\NONPNP"
 #define SYMBOLIC_NAME_STRING     L"\\DosDevices\\NONPNP"
@@ -37,12 +37,11 @@ typedef struct _CONTROL_DEVICE_EXTENSION {
     PVOID DataBuffer;
     SIZE_T DataBufferSize;
     SIZE_T DataLength;
-    WDF TIMER;
+    WDFTIMER TIMER;
 
 } CONTROL_DEVICE_EXTENSION, *PCONTROL_DEVICE_EXTENSION;
 
-WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(CONTROL_DEVICE_EXTENSION,
-                                        ControlGetData)
+WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(CONTROL_DEVICE_EXTENSION, ControlGetData)
 
 //
 // Following request context is used only for the method-neither ioctl case.
