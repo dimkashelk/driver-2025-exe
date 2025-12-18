@@ -1,22 +1,21 @@
-BUILD: Examining c:\winddk\7600.16385.0\src\general\ioctl\kmdf directory tree for files to compile.
-oacr invalidate wdksamples:x86chk /autocleanqueue
-1>Compiling and Linking c:\winddk\7600.16385.0\src\general\ioctl\kmdf\exe *************
-1>'nmake.exe /nologo BUILDMSG=Stop. -i BUILD_PASS=PASS2 LINKONLY=1 NOPASS0=1 MAKEDIR_RELATIVE_TO_BASEDIR=src\general\ioctl\kmdf\exe'
+ERROR - "z:\kmdf" file time is slightly in the future (0x1dc6e9c0712d38b (12/16/2025 14:55:32) vs. 0x1dc6e9c06bc7a6d (12/16/2025 14:55:32)).
+
+BUILD: Examining z:\kmdf directory tree for files to compile.
+oacr invalidate root:x86chk /autocleanqueue
+1>Compiling and Linking z:\kmdf\exe *************
+1>'nmake.exe /nologo BUILDMSG=Stop. -i BUILD_PASS=PASS2 LINKONLY=1 NOPASS0=1 MAKEDIR_RELATIVE_TO_BASEDIR='
 1>BUILDMSG: _NT_TARGET_VERSION SET TO WINXP
-1> C:\WinDDK\7600.16385.0\Bin\x86\oacr\oacrcl @c:\winddk\7600.16385.0\src\general\ioctl\kmdf\exe\objchk_wxp_x86\i386\cl.rsp
+1> C:\WinDDK\7600.16385.0\Bin\x86\oacr\oacrcl @z:\kmdf\exe\objchk_wxp_x86\i386\cl.rsp
 1>Microsoft (R) 32-bit C/C++ Optimizing Compiler Version 15.00.30729.207 for 80x86
 1>Copyright (C) Microsoft Corporation.  All rights reserved.
-1>cl /Fo"c:\winddk\7600.16385.0\src\general\ioctl\kmdf\exe\objchk_wxp_x86\i386/"
+1>cl /Fo"z:\kmdf\exe\objchk_wxp_x86\i386/"
 1> /FC
 1> /Ii386
 1> /I.
 1> /IC:\WinDDK\7600.16385.0\inc\ddk
 1> /IC:\WinDDK\7600.16385.0\inc\wdf\kmdf\1.9
 1> /I..\sys
-1> /Ic:\winddk\7600.16385.0\src\general\ioctl\kmdf\exe\objchk_wxp_x86\i386
-1> /Ic:\winddk\7600.16385.0\WDKSamples\inc
-1> /Ic:\winddk\7600.16385.0\WDKSamples\inc\objchk_wxp_x86\i386
-1> /Ic:\winddk\7600.16385.0\internal\WDKSamples\inc
+1> /Iz:\kmdf\exe\objchk_wxp_x86\i386
 1> /IC:\WinDDK\7600.16385.0\inc\api
 1> /IC:\WinDDK\7600.16385.0\inc\api
 1> /IC:\WinDDK\7600.16385.0\inc\crt
@@ -62,7 +61,7 @@ oacr invalidate wdksamples:x86chk /autocleanqueue
 1> /Oi
 1> /Oy-
 1> /Zi
-1> /Fdc:\winddk\7600.16385.0\src\general\ioctl\kmdf\exe\objchk_wxp_x86\i386\
+1> /Fdz:\kmdf\exe\objchk_wxp_x86\i386\
 1> /DKMDF_MAJOR_VERSION_STRING=01
 1> /DKMDF_MINOR_VERSION_STRING=009
 1> /wd4603
@@ -73,7 +72,7 @@ oacr invalidate wdksamples:x86chk /autocleanqueue
 1>testapp.c
 1>install.c
 1>Generating Code...
-1> C:\WinDDK\7600.16385.0\Bin\x86\oacr\oacrlink /out:c:\winddk\7600.16385.0\src\general\ioctl\kmdf\exe\objchk_wxp_x86\i386\nonpnpapp.exe /machine:ix86 @c:\winddk\7600.16385.0\src\general\ioctl\kmdf\exe\objchk_wxp_x86\i386\lnk.rsp
+1> C:\WinDDK\7600.16385.0\Bin\x86\oacr\oacrlink /out:z:\kmdf\exe\objchk_wxp_x86\i386\nonpnpapp.exe /machine:ix86 @z:\kmdf\exe\objchk_wxp_x86\i386\lnk.rsp
 1>Microsoft (R) Incremental Linker Version 9.00.30729.207
 1>Copyright (C) Microsoft Corporation.  All rights reserved.
 1>/MERGE:_PAGE=PAGE 
@@ -101,8 +100,8 @@ oacr invalidate wdksamples:x86chk /autocleanqueue
 1>/subsystem:console,5.01 
 1>/base:@C:\WinDDK\7600.16385.0\bin\coffbase.txt,usermode 
 1>/entry:mainCRTStartup 
-1>c:\winddk\7600.16385.0\src\general\ioctl\kmdf\exe\objchk_wxp_x86\i386\testapp.obj 
-1>c:\winddk\7600.16385.0\src\general\ioctl\kmdf\exe\objchk_wxp_x86\i386\install.obj 
+1>z:\kmdf\exe\objchk_wxp_x86\i386\testapp.obj 
+1>z:\kmdf\exe\objchk_wxp_x86\i386\install.obj 
 1>c:\winddk\7600.16385.0\lib\wxp\i386\advapi32.lib 
 1>c:\winddk\7600.16385.0\lib\wxp\i386\kernel32.lib 
 1>c:\winddk\7600.16385.0\lib\wxp\i386\msvcrt_winxp.obj 
@@ -110,24 +109,21 @@ oacr invalidate wdksamples:x86chk /autocleanqueue
 1>c:\winddk\7600.16385.0\lib\wxp\i386\setupapi.lib 
 1>c:\winddk\7600.16385.0\lib\wxp\i386\user32.lib 
 1>c:\winddk\7600.16385.0\lib\wxp\i386\sehupd.lib 
-1>Compiling and Linking c:\winddk\7600.16385.0\src\general\ioctl\kmdf\sys *************
-1>'nmake.exe /nologo BUILDMSG=Stop. -i BUILD_PASS=PASS2 LINKONLY=1 NOPASS0=1 MAKEDIR_RELATIVE_TO_BASEDIR=src\general\ioctl\kmdf\sys'
+1>Compiling and Linking z:\kmdf\sys *************
+1>'nmake.exe /nologo BUILDMSG=Stop. -i BUILD_PASS=PASS2 LINKONLY=1 NOPASS0=1 MAKEDIR_RELATIVE_TO_BASEDIR='
 1>BUILDMSG: _NT_TARGET_VERSION SET TO WINXP
-1> rc.exe -l 409 -DSXS_PROCESSOR_ARCHITECTURE="""x86"""  -DSXS_TARGET="""nonpnp.sys"""   -DSYSTEM_COMPATIBLE_ASSEMBLY_NAME="""Microsoft.Windows.SystemCompatible"""  -DLSYSTEM_COMPATIBLE_ASSEMBLY_NAME=L"""Microsoft.Windows.SystemCompatible"""   -DSXS_ASSEMBLY_VERSION=""""""  /r /fo c:\winddk\7600.16385.0\src\general\ioctl\kmdf\sys\objchk_wxp_x86\i386\nonpnp.res /D_X86_=1 /Di386=1  /DSTD_CALL /DCONDITION_HANDLING=1 /DNT_UP=1  /DNT_INST=0 /DWIN32=100 /D_NT1X_=100 /DWINNT=1 /D_WIN32_WINNT=0x0501 /DWINVER=0x0501 /D_WIN32_IE=0x0603    /DWIN32_LEAN_AND_MEAN=1  /DDEVL=1 /DDBG=1 /D__BUILDMACHINE__=WinDDK /DFPO=0   /D_DLL=1 /DNDEBUG  -D_WIN2K_COMPAT_SLIST_USAGE /DDEPRECATE_DDK_FUNCTIONS=1 /DMSC_NOOPT /DNTDDI_VERSION=0x05010200 /DRUN_WPP   /I.. /Ic:\winddk\7600.16385.0\src\general\ioctl\kmdf\sys\objchk_wxp_x86\i386 /Ic:\winddk\7600.16385.0\WDKSamples\inc /Ic:\winddk\7600.16385.0\WDKSamples\inc\objchk_wxp_x86\i386 /Ic:\winddk\7600.16385.0\internal\WDKSamples\inc /IC:\WinDDK\7600.16385.0\inc\api /IC:\WinDDK\7600.16385.0\inc\api /IC:\WinDDK\7600.16385.0\inc\ddk /IC:\WinDDK\7600.16385.0\inc\ddk /IC:\WinDDK\7600.16385.0\inc\wdf\kmdf\1.9 /IC:\WinDDK\7600.16385.0\inc\crt .\nonpnp.rc
+1> rc.exe -l 409 -DSXS_PROCESSOR_ARCHITECTURE="""x86"""  -DSXS_TARGET="""nonpnp.sys"""   -DSYSTEM_COMPATIBLE_ASSEMBLY_NAME="""Microsoft.Windows.SystemCompatible"""  -DLSYSTEM_COMPATIBLE_ASSEMBLY_NAME=L"""Microsoft.Windows.SystemCompatible"""   -DSXS_ASSEMBLY_VERSION=""""""  /r /fo z:\kmdf\sys\objchk_wxp_x86\i386\nonpnp.res /D_X86_=1 /Di386=1  /DSTD_CALL /DCONDITION_HANDLING=1 /DNT_UP=1  /DNT_INST=0 /DWIN32=100 /D_NT1X_=100 /DWINNT=1 /D_WIN32_WINNT=0x0501 /DWINVER=0x0501 /D_WIN32_IE=0x0603    /DWIN32_LEAN_AND_MEAN=1  /DDEVL=1 /DDBG=1 /D__BUILDMACHINE__=WinDDK /DFPO=0   /D_DLL=1 /DNDEBUG  -D_WIN2K_COMPAT_SLIST_USAGE /DDEPRECATE_DDK_FUNCTIONS=1 /DMSC_NOOPT /DNTDDI_VERSION=0x05010200 /DRUN_WPP   /I.. /Iz:\kmdf\sys\objchk_wxp_x86\i386 /IC:\WinDDK\7600.16385.0\inc\api /IC:\WinDDK\7600.16385.0\inc\api /IC:\WinDDK\7600.16385.0\inc\ddk /IC:\WinDDK\7600.16385.0\inc\ddk /IC:\WinDDK\7600.16385.0\inc\wdf\kmdf\1.9 /IC:\WinDDK\7600.16385.0\inc\crt .\nonpnp.rc
 1>Microsoft (R) Windows (R) Resource Compiler Version 6.1.6908.0
 1>Copyright (C) Microsoft Corporation.  All rights reserved.
-1> C:\WinDDK\7600.16385.0\Bin\x86\oacr\oacrcl @c:\winddk\7600.16385.0\src\general\ioctl\kmdf\sys\objchk_wxp_x86\i386\cl.rsp
+1> C:\WinDDK\7600.16385.0\Bin\x86\oacr\oacrcl @z:\kmdf\sys\objchk_wxp_x86\i386\cl.rsp
 1>Microsoft (R) 32-bit C/C++ Optimizing Compiler Version 15.00.30729.207 for 80x86
 1>Copyright (C) Microsoft Corporation.  All rights reserved.
-1>cl /Fo"c:\winddk\7600.16385.0\src\general\ioctl\kmdf\sys\objchk_wxp_x86\i386/"
+1>cl /Fo"z:\kmdf\sys\objchk_wxp_x86\i386/"
 1> /FC
 1> /Ii386
 1> /I.
 1> /I..
-1> /Ic:\winddk\7600.16385.0\src\general\ioctl\kmdf\sys\objchk_wxp_x86\i386
-1> /Ic:\winddk\7600.16385.0\WDKSamples\inc
-1> /Ic:\winddk\7600.16385.0\WDKSamples\inc\objchk_wxp_x86\i386
-1> /Ic:\winddk\7600.16385.0\internal\WDKSamples\inc
+1> /Iz:\kmdf\sys\objchk_wxp_x86\i386
 1> /IC:\WinDDK\7600.16385.0\inc\api
 1> /IC:\WinDDK\7600.16385.0\inc\api
 1> /IC:\WinDDK\7600.16385.0\inc\ddk
@@ -177,7 +173,7 @@ oacr invalidate wdksamples:x86chk /autocleanqueue
 1> /Oi
 1> /Oy-
 1> /Zi
-1> /Fdc:\winddk\7600.16385.0\src\general\ioctl\kmdf\sys\objchk_wxp_x86\i386\
+1> /Fdz:\kmdf\sys\objchk_wxp_x86\i386\
 1> /DKMDF_MAJOR_VERSION=1
 1> /DKMDF_MINOR_VERSION=9
 1> /DKMDF_MAJOR_VERSION_STRING=01
@@ -188,7 +184,7 @@ oacr invalidate wdksamples:x86chk /autocleanqueue
 1> /FIC:\WinDDK\7600.16385.0\inc\api\warning.h
 1> .\nonpnp.c 
 1>nonpnp.c
-1> C:\WinDDK\7600.16385.0\Bin\x86\oacr\oacrlink /out:c:\winddk\7600.16385.0\src\general\ioctl\kmdf\sys\objchk_wxp_x86\i386\nonpnp.sys /machine:ix86 @c:\winddk\7600.16385.0\src\general\ioctl\kmdf\sys\objchk_wxp_x86\i386\lnk.rsp
+1> C:\WinDDK\7600.16385.0\Bin\x86\oacr\oacrlink /out:z:\kmdf\sys\objchk_wxp_x86\i386\nonpnp.sys /machine:ix86 @z:\kmdf\sys\objchk_wxp_x86\i386\lnk.rsp
 1>Microsoft (R) Incremental Linker Version 9.00.30729.207
 1>Copyright (C) Microsoft Corporation.  All rights reserved.
 1>/MERGE:_PAGE=PAGE 
@@ -214,9 +210,9 @@ oacr invalidate wdksamples:x86chk /autocleanqueue
 1>/align:0x80 /stub:c:\winddk\7600.16385.0\lib\wxp\stub512.com 
 1>/subsystem:native,5.01 
 1>/entry:FxDriverEntry@8 
-1>/out:c:\winddk\7600.16385.0\src\general\ioctl\kmdf\sys\objchk_wxp_x86\i386\nonpnp.sys 
-1>c:\winddk\7600.16385.0\src\general\ioctl\kmdf\sys\objchk_wxp_x86\i386\nonpnp.res 
-1>c:\winddk\7600.16385.0\src\general\ioctl\kmdf\sys\objchk_wxp_x86\i386\nonpnp.obj 
+1>/out:z:\kmdf\sys\objchk_wxp_x86\i386\nonpnp.sys 
+1>z:\kmdf\sys\objchk_wxp_x86\i386\nonpnp.res 
+1>z:\kmdf\sys\objchk_wxp_x86\i386\nonpnp.obj 
 1>c:\winddk\7600.16385.0\lib\wxp\i386\BufferOverflowK.lib 
 1>c:\winddk\7600.16385.0\lib\wxp\i386\ntoskrnl.lib 
 1>c:\winddk\7600.16385.0\lib\wxp\i386\hal.lib 

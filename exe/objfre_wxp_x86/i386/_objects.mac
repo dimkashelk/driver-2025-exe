@@ -1,0 +1,17 @@
+
+
+386_OBJECTS=\
+ $(OBJ_PATH)\$O\testapp.obj \
+ $(OBJ_PATH)\$O\install.obj \
+
+
+
+
+
+# lowercased
+BASEDIR=c:\winddk\7600.16385.0
+OBJECT_ROOT=c:\winddk\7600.16385.0
+MAKEDIR_LOWERCASE=c:\samples\ioctl\ioctl\kmdf\exe
+OBJ_PATH=c:\samples\ioctl\ioctl\kmdf\exe
+CONCURRENT_MIDL=0
+CONCURRENT_MANIFEST_BUILD=0

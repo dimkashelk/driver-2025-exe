@@ -80,6 +80,11 @@ DoIoctls(
     HANDLE hDevice
     );
 
+VOID
+DoTimerReadTest(
+    HANDLE hDevice
+    );
+
 #define MAX_VERSION_SIZE 6
 
 #define CONVERT_VERSION_TO_STRING_WORKER(major, minor)  #major ## #minor
@@ -325,6 +330,8 @@ main(
 
     DoIoctls(hDevice);
 
+    DoTimerReadTest(hDevice);
+
     do {
 
         if(!DoFileReadWrite(hDevice)) {
@@ -509,6 +516,248 @@ DoIoctls(
 
     return;
 
+}
+
+
+VOID
+DoTimerReadTest(
+    HANDLE HDevice
+    )
+/*++
+
+Routine Description:
+
+    Test function to verify timer-based data generation using DeviceIoControl
+    with the new "dimkashelk" sequence logic and reset-on-read behavior.
+    Performs multiple IOCTL calls with delays to verify that:
+    1. Initial read might return 0 bytes or start of "dimkashelk" sequence
+    2. After waiting, more characters from "dimkashelk" are accumulated
+    3. After another read, buffer is cleared and returns 0 bytes
+    4. After waiting again, characters from "dimkashelk" are accumulated again
+
+Arguments:
+
+    HDevice - Handle to the device.
+
+Return Value:
+
+    None.
+
+--*/
+{
+    CHAR readBuf[4096];
+    DWORD bytesReturned;
+    BOOL result;
+    ULONG i;
+    static const char expected_sequence_start[] = "dimkashelk";
+    const ULONG expected_seq_len = sizeof(expected_sequence_start) - 1; // Length without null terminator
+
+    printf("\n=== Testing Timer-Based Data Generation (DeviceIoControl) ===\n\n");
+
+    // Test 1: Reading immediately after device open
+    printf("Test 1: Reading immediately after device open...\n");
+    memset(readBuf, 0, sizeof(readBuf));
+    result = DeviceIoControl(HDevice,
+                             IOCTL_NONPNP_GET_TIMER_DATA,
+                             NULL,          // Input buffer not needed
+                             0,             // Input buffer length
+                             readBuf,       // Output buffer
+                             sizeof(readBuf),
+                             &bytesReturned,
+                             NULL);
+    if (!result) {
+        printf("  Error: DeviceIoControl failed with error 0x%x\n", GetLastError());
+        return;
+    }
+
+    printf("  Result: Read %d bytes\n", bytesReturned);
+    printf("  Data: ");
+    for (i = 0; i < bytesReturned && i < 100; i++) {
+        printf("%c", readBuf[i]);
+    }
+    printf("\n");
+
+    // Check if the data starts with 'd' (first character of the sequence) or is 0 bytes
+    if (bytesReturned == 0) {
+         printf("  INFO: Got 0 bytes (buffer might be empty initially or reset from previous run).\n");
+    } else if (bytesReturned >= 1 && readBuf[0] == 'd') {
+        printf("  INFO: Got data starting with 'd' (expected first char of 'dimkashelk')\n");
+        // Optionally, check if the read data is a prefix of the expected sequence
+        if (bytesReturned <= expected_seq_len) {
+            BOOL is_prefix = TRUE;
+            for (i = 0; i < bytesReturned; i++) {
+                if (readBuf[i] != expected_sequence_start[i]) {
+                    is_prefix = FALSE;
+                    break;
+                }
+            }
+            if (is_prefix) {
+                 printf("  INFO: Read data is a valid prefix of 'dimkashelk'\n");
+            } else {
+                 printf("  WARN: Read data starts with 'd' but contains unexpected chars.\n");
+            }
+        } else {
+             printf("  INFO: Read data starts with 'd', but is longer than 'dimkashelk'.\n");
+        }
+    } else {
+        printf("  FAIL: Expected data starting with 'd' or 0 bytes, got %d bytes starting with '%c'\n", bytesReturned, readBuf[0]);
+    }
+
+
+    // Test 2: Wait 3 seconds for timer to accumulate data
+    printf("\nTest 2: Waiting 3 seconds for timer to accumulate data...\n");
+    Sleep(3000);
+
+    memset(readBuf, 0, sizeof(readBuf));
+    result = DeviceIoControl(HDevice,
+                             IOCTL_NONPNP_GET_TIMER_DATA,
+                             NULL,          // Input buffer not needed
+                             0,             // Input buffer length
+                             readBuf,       // Output buffer
+                             sizeof(readBuf),
+                             &bytesReturned,
+                             NULL);
+    if (!result) {
+        printf("  Error: DeviceIoControl failed with error 0x%x\n", GetLastError());
+        return;
+    }
+
+    printf("  Result: Read %d bytes\n", bytesReturned);
+    printf("  Data: ");
+    for (i = 0; i < bytesReturned && i < 100; i++) {
+        printf("%c", readBuf[i]);
+    }
+    printf("\n");
+
+    // Check if the data starts with 'd' and seems to be accumulating the sequence
+    if (bytesReturned == 0) {
+         printf("  INFO: Got 0 bytes (buffer might have been cleared after previous read or still empty).\n");
+    } else if (bytesReturned >= 1 && readBuf[0] == 'd') {
+        if (bytesReturned <= expected_seq_len) {
+            BOOL is_prefix = TRUE;
+            for (i = 0; i < bytesReturned; i++) {
+                if (readBuf[i] != expected_sequence_start[i]) {
+                    is_prefix = FALSE;
+                    break;
+                }
+            }
+            if (is_prefix && bytesReturned >= 3) { // At least "dim" - adjust as needed
+                printf("  PASS: Got data starting with 'd', appears to be accumulating 'dimkashelk' (got %d chars)\n", bytesReturned);
+            } else if (is_prefix) {
+                 printf("  INFO: Got data starting with 'd', part of 'dimkashelk', but less than 3 chars (%d).\n", bytesReturned);
+            } else {
+                 printf("  WARN: Got data starting with 'd' but contains unexpected chars.\n");
+            }
+        } else {
+             printf("  INFO: Got data starting with 'd', longer than 'dimkashelk'.\n");
+        }
+    } else {
+        printf("  FAIL: Expected data starting with 'd' or 0 bytes, got %d bytes starting with '%c'\n", bytesReturned, readBuf[0]);
+    }
+
+
+    // Test 3: Reading immediately after previous read (buffer should be cleared according to new driver logic)
+    printf("\nTest 3: Reading immediately after previous read (buffer should be cleared)...\n");
+    memset(readBuf, 0, sizeof(readBuf));
+    result = DeviceIoControl(HDevice,
+                             IOCTL_NONPNP_GET_TIMER_DATA,
+                             NULL,          // Input buffer not needed
+                             0,             // Input buffer length
+                             readBuf,       // Output buffer
+                             sizeof(readBuf),
+                             &bytesReturned,
+                             NULL);
+    if (!result) {
+        printf("  Error: DeviceIoControl failed with error 0x%x\n", GetLastError());
+        return;
+    }
+
+    printf("  Result: Read %d bytes\n", bytesReturned);
+    printf("  Data: ");
+    for (i = 0; i < bytesReturned && i < 100; i++) {
+        printf("%c", readBuf[i]);
+    }
+    printf("\n");
+
+    // According to the modified driver logic, after reading, DataLength is reset to 0.
+    if (bytesReturned == 0) {
+        printf("  PASS: Buffer was cleared and reset (returned 0 bytes)\n");
+    } else if (bytesReturned >= 1 && readBuf[0] == 'd') {
+         // If it returns a partial sequence starting with 'd', it might indicate the reset didn't happen correctly
+         // or the timer started adding before the next read, or the reset logic is different (e.g., reset to 'd', not 0)
+         // Based on the previous output, the reset seems to go to 0, so this is less likely but possible if timing is off
+         printf("  INFO: Got data starting with 'd' (%d bytes). May indicate sequence restarted or reset not to 0.\n", bytesReturned);
+         // Optionally check if it's a prefix again
+         if (bytesReturned <= expected_seq_len) {
+            BOOL is_prefix = TRUE;
+            for (i = 0; i < bytesReturned; i++) {
+                if (readBuf[i] != expected_sequence_start[i]) {
+                    is_prefix = FALSE;
+                    break;
+                }
+            }
+            if (is_prefix) {
+                 printf("  INFO: Returned data is a valid prefix of 'dimkashelk'.\n");
+            } else {
+                 printf("  WARN: Returned data starts with 'd' but contains unexpected chars.\n");
+            }
+        }
+    } else {
+        printf("  FAIL: Expected 0 bytes or data starting with 'd' after clear, got %d bytes starting with '%c'\n", bytesReturned, readBuf[0]);
+    }
+
+    // Test 4: Wait 5 seconds for timer to accumulate more data
+    printf("\nTest 4: Waiting 5 seconds for timer to accumulate more data...\n");
+    Sleep(5000);
+
+    memset(readBuf, 0, sizeof(readBuf));
+    result = DeviceIoControl(HDevice,
+                             IOCTL_NONPNP_GET_TIMER_DATA,
+                             NULL,          // Input buffer not needed
+                             0,             // Input buffer length
+                             readBuf,       // Output buffer
+                             sizeof(readBuf),
+                             &bytesReturned,
+                             NULL);
+    if (!result) {
+        printf("  Error: DeviceIoControl failed with error 0x%x\n", GetLastError());
+        return;
+    }
+
+    printf("  Result: Read %d bytes\n", bytesReturned);
+    printf("  Data: ");
+    for (i = 0; i < bytesReturned && i < 100; i++) {
+        printf("%c", readBuf[i]);
+    }
+    printf("\n");
+
+    // Check accumulation again after waiting, expecting it to start from 'd' again
+    if (bytesReturned == 0) {
+         printf("  INFO: Got 0 bytes (buffer might have been cleared after previous read or still empty).\n");
+    } else if (bytesReturned >= 1 && readBuf[0] == 'd') {
+        if (bytesReturned <= expected_seq_len) {
+            BOOL is_prefix = TRUE;
+            for (i = 0; i < bytesReturned; i++) {
+                if (readBuf[i] != expected_sequence_start[i]) {
+                    is_prefix = FALSE;
+                    break;
+                }
+            }
+            if (is_prefix && bytesReturned >= 5) { // At least "dimka" - adjust as needed
+                printf("  PASS: Got data starting with 'd', appears to be accumulating 'dimkashelk' again (got %d chars)\n", bytesReturned);
+            } else if (is_prefix) {
+                 printf("  INFO: Got data starting with 'd', part of 'dimkashelk', but less than 5 chars (%d).\n", bytesReturned);
+            } else {
+                 printf("  WARN: Got data starting with 'd' but contains unexpected chars.\n");
+            }
+        } else {
+             printf("  INFO: Got data starting with 'd', longer than 'dimkashelk'.\n");
+        }
+    } else {
+        printf("  FAIL: Expected data starting with 'd' or 0 bytes, got %d bytes starting with '%c'\n", bytesReturned, readBuf[0]);
+    }
+
+    printf("\n=== Timer Test Complete ===\n\n");
 }
 
 

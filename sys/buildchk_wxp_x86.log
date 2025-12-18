@@ -1,5 +1,3 @@
-ERROR - "z:\kmdf\sys" file time is slightly in the future (0x1dc6aa8dce34f47 (12/11/2025 14:17:20) vs. 0x1dc6aa8dcd4fc09 (12/11/2025 14:17:20)).
-
 BUILD: Examining z:\kmdf\sys directory for files to compile.
 oacr invalidate root:x86chk /autocleanqueue
 1>Compiling and Linking z:\kmdf\sys *************

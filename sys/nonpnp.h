@@ -16,7 +16,6 @@ Environment:
 
 --*/
 
-#include <wdm.h>
 #include <ntddk.h>
 #include <wdf.h>
 
@@ -32,11 +31,11 @@ Environment:
 
 typedef struct _CONTROL_DEVICE_EXTENSION {
 
-    HANDLE   FileHandle; // Store your control data here
-
-    WDFTIMER Timer;
-    ULONG    DataLength;
-    UCHAR    DataBuffer[256];
+    HANDLE   FileHandle;      // Store your control data here
+    WDFTIMER Timer;            // Periodic timer for data generation
+    CHAR     DataBuffer[4096]; // Internal data buffer
+    ULONG    DataLength;       // Current data length
+    WDFSPINLOCK SpinLock;      // Synchronization for timer and ReadFile
 
 } CONTROL_DEVICE_EXTENSION, *PCONTROL_DEVICE_EXTENSION;
 
@@ -54,6 +53,15 @@ typedef struct _REQUEST_CONTEXT {
 } REQUEST_CONTEXT, *PREQUEST_CONTEXT;
 
 WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(REQUEST_CONTEXT, GetRequestContext)
+
+//
+// Timer context structure for passing device extension to timer callback
+//
+typedef struct _TIMER_CONTEXT {
+    PCONTROL_DEVICE_EXTENSION DevExt;
+} TIMER_CONTEXT, *PTIMER_CONTEXT;
+
+WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(TIMER_CONTEXT, GetTimerContext)
 
 //
 // Device driver routine declarations.
@@ -85,7 +93,7 @@ EVT_WDF_IO_IN_CALLER_CONTEXT NonPnpEvtDeviceIoInCallerContext;
 EVT_WDF_DEVICE_FILE_CREATE NonPnpEvtDeviceFileCreate;
 EVT_WDF_FILE_CLOSE NonPnpEvtFileClose;
 
-EVT_WDF_TIMER EvtTimerFunc;
+EVT_WDF_TIMER NonPnpEvtTimerFunc;
 
 VOID
 PrintChars(
